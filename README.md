@@ -37,6 +37,7 @@ text-to-images-mp/
 
 ## 快速开始
 
+### 方法一：直接使用
 1. 克隆项目
 ```bash
 git clone https://github.com/yourusername/text-to-images-mp.git
@@ -48,6 +49,15 @@ cd text-to-images-mp
 3. 配置云开发环境
 
 4. 运行项目
+
+### 方法二：完整部署
+详细的部署步骤请参考：[部署指南](docs/deployment-guide.md)
+
+## 文档目录
+
+- [产品规划](docs/product-plan.md) - 详细的产品功能规划和开发计划
+- [技术架构](docs/tech-architecture.md) - 系统架构设计和技术选型
+- [部署指南](docs/deployment-guide.md) - 完整的部署和配置说明
 
 ## 许可证
 
