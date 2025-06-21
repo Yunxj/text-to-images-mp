@@ -1,0 +1,118 @@
+<!--creative.wxml-->
+<view class="container">
+  <!-- 头部搜索 -->
+  <view class="search-bar">
+    <view class="search-wrapper">
+      <input 
+        class="search-input" 
+        placeholder="搜索任务..."
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+      />
+      <view class="search-icon" bindtap="onSearch">🔍</view>
+    </view>
+  </view>
+
+  <!-- 教程视频区域 -->
+  <view class="tutorial-section">
+    <view class="tutorial-item" bindtap="playTutorial" data-tutorial="{{tutorialVideos[0]}}">
+      <view class="tutorial-cover">
+        <image class="tutorial-image" src="{{tutorialVideos[0].cover}}" mode="aspectFill" />
+        <view class="play-button">▶</view>
+      </view>
+      <view class="tutorial-info">
+        <text class="tutorial-title">{{tutorialVideos[0].title}}</text>
+        <text class="tutorial-desc">{{tutorialVideos[0].desc}}</text>
+      </view>
+    </view>
+
+    <view class="tutorial-item" bindtap="playTutorial" data-tutorial="{{tutorialVideos[1]}}">
+      <view class="tutorial-cover">
+        <image class="tutorial-image" src="{{tutorialVideos[1].cover}}" mode="aspectFill" />
+        <view class="play-button">▶</view>
+      </view>
+      <view class="tutorial-info">
+        <text class="tutorial-title">{{tutorialVideos[1].title}}</text>
+        <text class="tutorial-desc">{{tutorialVideos[1].desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 创意模板网格 -->
+  <view class="templates-grid">
+    <view 
+      class="template-item" 
+      wx:for="{{templates}}" 
+      wx:key="id"
+      bindtap="useTemplate"
+      data-template="{{item}}"
+    >
+      <view class="template-cover">
+        <image class="template-image" src="{{item.cover}}" mode="aspectFill" />
+        <view class="template-overlay">
+          <view class="template-badge">{{item.badge}}</view>
+          <view class="template-info">
+            <text class="template-title">{{item.title}}</text>
+            <text class="template-subtitle">{{item.subtitle}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载更多 -->
+  <view class="load-more" wx:if="{{hasMore}}">
+    <view class="load-more-btn" bindtap="loadMoreTemplates">
+      <text class="load-more-text">加载更多创意</text>
+    </view>
+  </view>
+
+  <!-- 没有更多内容 -->
+  <view class="no-more" wx:if="{{!hasMore && templates.length > 0}}">
+    <text class="no-more-text">没有更多内容了</text>
+  </view>
+</view>
+
+<!-- 教程播放弹窗 -->
+<view class="tutorial-modal" wx:if="{{showTutorialModal}}">
+  <view class="modal-mask" bindtap="closeTutorialModal"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">{{currentTutorial.title}}</text>
+      <text class="modal-close" bindtap="closeTutorialModal">×</text>
+    </view>
+    <view class="modal-body">
+      <video 
+        class="tutorial-video"
+        src="{{currentTutorial.videoUrl}}"
+        poster="{{currentTutorial.cover}}"
+        controls
+        autoplay
+      />
+      <view class="tutorial-description">
+        <text class="tutorial-desc-text">{{currentTutorial.description}}</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 模板预览弹窗 -->
+<view class="template-modal" wx:if="{{showTemplateModal}}">
+  <view class="modal-mask" bindtap="closeTemplateModal"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">{{currentTemplate.title}}</text>
+      <text class="modal-close" bindtap="closeTemplateModal">×</text>
+    </view>
+    <view class="modal-body">
+      <view class="template-preview">
+        <image class="preview-image" src="{{currentTemplate.preview}}" mode="aspectFit" />
+      </view>
+      <view class="template-actions">
+        <button class="template-btn secondary" bindtap="closeTemplateModal">取消</button>
+        <button class="template-btn primary" bindtap="confirmUseTemplate">使用模板</button>
+      </view>
+    </view>
+  </view>
+</view> 

@@ -1,0 +1,171 @@
+<!--profile.wxml-->
+<view class="container">
+  <!-- 用户信息卡片 -->
+  <view class="user-card">
+    <view class="user-info">
+      <image class="avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" />
+      <view class="user-details">
+        <view class="user-name">{{userInfo.nickName || '微信用户'}}</view>
+        <view class="user-id">ID: {{userId}}</view>
+      </view>
+    </view>
+    
+    <!-- 统计数据 -->
+    <view class="stats">
+      <view class="stat-item">
+        <text class="stat-number">{{workCount}}</text>
+        <text class="stat-label">作品数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{credits}}</text>
+        <text class="stat-label">制作点数</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- VIP会员卡片 -->
+  <view class="vip-card {{isVip ? 'vip-active' : ''}}" bindtap="showVipModal">
+    <view class="vip-content">
+      <view class="vip-icon">{{isVip ? '👑' : '💎'}}</view>
+      <view class="vip-text">
+        <text class="vip-title">{{isVip ? '已是VIP会员' : '升级会员，解锁更多特权'}}</text>
+        <text class="vip-desc">{{isVip ? '享受无限制生成特权' : '点击获取特权'}}</text>
+      </view>
+      <view class="vip-arrow">{{isVip ? '✨' : '→'}}</view>
+    </view>
+  </view>
+
+  <!-- 功能入口 -->
+  <view class="function-grid">
+    <view class="function-item" bindtap="navigateTo" data-url="/pages/gallery/gallery">
+      <view class="function-icon">🖼️</view>
+      <text class="function-text">图片模板</text>
+    </view>
+    <view class="function-item" bindtap="navigateTo" data-url="/pages/index/index">
+      <view class="function-icon">💡</view>
+      <text class="function-text">自由创作</text>
+    </view>
+    <view class="function-item" bindtap="joinGroup">
+      <view class="function-icon">👥</view>
+      <text class="function-text">加交流群</text>
+    </view>
+    <view class="function-item" bindtap="showExchangeModal">
+      <view class="function-icon">🎁</view>
+      <text class="function-text">兑换码</text>
+    </view>
+  </view>
+
+  <!-- 我的作品 -->
+  <view class="works-section">
+    <view class="section-header">
+      <text class="section-title">我的作品</text>
+      <text class="section-more" bindtap="navigateTo" data-url="/pages/gallery/gallery">查看全部</text>
+    </view>
+    
+    <view class="works-list" wx:if="{{recentWorks.length > 0}}">
+      <view 
+        class="work-item" 
+        wx:for="{{recentWorks}}" 
+        wx:key="id"
+        bindtap="previewWork"
+        data-work="{{item}}"
+      >
+        <image class="work-image" src="{{item.image}}" mode="aspectFill" />
+        <view class="work-info">
+          <text class="work-prompt">{{item.prompt}}</text>
+          <text class="work-time">{{item.createTime}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-works" wx:else bindtap="navigateTo" data-url="/pages/index/index">
+      <image class="empty-icon" src="/images/empty-works.png" />
+      <text class="empty-text">还没有作品哦</text>
+      <text class="empty-action">去创作第一个作品</text>
+    </view>
+  </view>
+
+  <!-- 使用教程 -->
+  <view class="tutorial-banner" bindtap="showTutorial">
+    <view class="tutorial-content">
+      <view class="tutorial-icon">🎯</view>
+      <view class="tutorial-text">
+        <text class="tutorial-title">用有图有槽怎么赚钱？</text>
+        <text class="tutorial-desc">查看赚钱攻略</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 设置和帮助 -->
+  <view class="menu-section">
+    <view class="menu-item" bindtap="showFeedback">
+      <text class="menu-text">意见反馈</text>
+      <text class="menu-arrow">→</text>
+    </view>
+    <view class="menu-item" bindtap="showAbout">
+      <text class="menu-text">关于我们</text>
+      <text class="menu-arrow">→</text>
+    </view>
+    <view class="menu-item" bindtap="showPrivacy">
+      <text class="menu-text">隐私政策</text>
+      <text class="menu-arrow">→</text>
+    </view>
+  </view>
+</view>
+
+<!-- VIP升级弹窗 -->
+<view class="vip-modal" wx:if="{{showVipModal}}">
+  <view class="modal-mask" bindtap="hideVipModal"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">升级VIP会员</text>
+      <text class="modal-close" bindtap="hideVipModal">×</text>
+    </view>
+    <view class="modal-body">
+      <view class="vip-privileges">
+        <view class="privilege-item">
+          <text class="privilege-icon">🚀</text>
+          <text class="privilege-text">无限生成次数</text>
+        </view>
+        <view class="privilege-item">
+          <text class="privilege-icon">👑</text>
+          <text class="privilege-text">专属高级角色</text>
+        </view>
+        <view class="privilege-item">
+          <text class="privilege-icon">🎨</text>
+          <text class="privilege-text">高清图片导出</text>
+        </view>
+        <view class="privilege-item">
+          <text class="privilege-icon">⚡</text>
+          <text class="privilege-text">优先生成队列</text>
+        </view>
+      </view>
+      <view class="vip-price">
+        <text class="price-label">限时特价</text>
+        <text class="price-value">￥19.9/月</text>
+        <text class="price-original">原价 ￥39.9</text>
+      </view>
+      <button class="vip-buy-btn" bindtap="buyVip">立即升级</button>
+    </view>
+  </view>
+</view>
+
+<!-- 兑换码弹窗 -->
+<view class="exchange-modal" wx:if="{{showExchangeModal}}">
+  <view class="modal-mask" bindtap="hideExchangeModal"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">输入兑换码</text>
+      <text class="modal-close" bindtap="hideExchangeModal">×</text>
+    </view>
+    <view class="modal-body">
+      <input 
+        class="exchange-input" 
+        placeholder="请输入兑换码"
+        value="{{exchangeCode}}"
+        bindinput="onExchangeCodeInput"
+      />
+      <button class="exchange-btn" bindtap="exchangeCode">兑换</button>
+    </view>
+  </view>
+</view> 
