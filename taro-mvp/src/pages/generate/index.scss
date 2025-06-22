@@ -1,0 +1,158 @@
+.generate-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  
+  .container {
+    padding: 20px;
+  }
+  
+  .section-title {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+  }
+  
+  // 角色选择区域
+  .character-section {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    
+    .character-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      
+      .character-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px;
+        border-radius: 12px;
+        border: 2px solid #f0f0f0;
+        background: #fafafa;
+        transition: all 0.3s ease;
+        
+        &.selected {
+          border-color: #6366f1;
+          background: #f0f0ff;
+          transform: scale(1.05);
+        }
+        
+        .character-image {
+          width: 60px;
+          height: 60px;
+          border-radius: 30px;
+          margin-bottom: 8px;
+          background: #e0e0e0;
+        }
+        
+        .character-name {
+          font-size: 12px;
+          color: #666;
+          text-align: center;
+        }
+      }
+    }
+  }
+  
+  // 输入区域
+  .input-section {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    
+    .prompt-input {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      background: #fafafa;
+      
+      &:focus {
+        border-color: #6366f1;
+        background: white;
+      }
+    }
+    
+    .input-tip {
+      display: block;
+      text-align: right;
+      font-size: 12px;
+      color: #999;
+      margin-top: 8px;
+    }
+  }
+  
+  // 生成按钮
+  .generate-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    margin-bottom: 20px;
+    
+    &:not([disabled]):active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 12px rgba(99, 102, 241, 0.4);
+    }
+    
+    &[disabled] {
+      opacity: 0.6;
+    }
+  }
+  
+  // 结果展示区域
+  .result-section {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    
+    .generated-image-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+      
+      .generated-image {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      }
+    }
+    
+    .result-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      
+      button {
+        background: #f0f0f0;
+        color: #333;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 14px;
+        
+        &:active {
+          background: #e0e0e0;
+        }
+      }
+    }
+  }
+} 

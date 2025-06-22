@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI文字生成图片 - 测试页面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        .generated-image {
+            width: 100%;
+            max-width: 512px;
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            display: block;
+        }
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .enhanced-prompt {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #495057;
+        }
+        .login-section {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AI文字生成图片</h1>
+        
+        <div class="login-section">
+            <h3>用户登录</h3>
+            <div class="input-group">
+                <label for="nickname">昵称:</label>
+                <input type="text" id="nickname" value="测试用户" placeholder="输入您的昵称">
+            </div>
+            <button onclick="login()">登录</button>
+        </div>
+
+        <div id="mainApp" style="display: none;">
+            <div class="input-group">
+                <label for="prompt">描述你想要的图片:</label>
+                <textarea id="prompt" placeholder="例如：一只可爱的橘猫在樱花树下玩耍，阳光明媚，卡通风格"></textarea>
+            </div>
+
+            <div class="input-group">
+                <label for="style">图片风格:</label>
+                <select id="style">
+                    <option value="cartoon">卡通风格</option>
+                    <option value="realistic">写实风格</option>
+                    <option value="cyberpunk">赛博朋克</option>
+                    <option value="anime">动漫风格</option>
+                    <option value="oil_painting">油画风格</option>
+                </select>
+            </div>
+
+            <button onclick="generateImage()" id="generateBtn">🎨 生成图片</button>
+
+            <div id="resultSection" class="result-section">
+                <h3>生成结果</h3>
+                <div id="loadingDiv" class="loading" style="display: none;">
+                    🤖 正在进行两步生成...<br>
+                    📝 步骤1: DeepSeek优化提示词<br>
+                    🎨 步骤2: 豆包生成图片
+                </div>
+                <div id="enhancedPrompt" class="enhanced-prompt" style="display: none;"></div>
+                <img id="generatedImage" class="generated-image" style="display: none;">
+            </div>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        let userToken = null;
+
+        async function login() {
+            const nickname = document.getElementById('nickname').value;
+            if (!nickname.trim()) {
+                showStatus('请输入昵称', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code: 'web_test_' + Date.now(),
+                        userInfo: {
+                            nickName: nickname,
+                            avatarUrl: ''
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                if (data.code === 200) {
+                    userToken = data.data.token;
+                    showStatus(`登录成功！欢迎 ${data.data.userInfo.nickname}`, 'success');
+                    document.querySelector('.login-section').style.display = 'none';
+                    document.getElementById('mainApp').style.display = 'block';
+                } else {
+                    showStatus('登录失败: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showStatus('登录失败: ' + error.message, 'error');
+            }
+        }
+
+        async function generateImage() {
+            const prompt = document.getElementById('prompt').value;
+            const style = document.getElementById('style').value;
+
+            if (!prompt.trim()) {
+                showStatus('请输入图片描述', 'error');
+                return;
+            }
+
+            if (!userToken) {
+                showStatus('请先登录', 'error');
+                return;
+            }
+
+            const generateBtn = document.getElementById('generateBtn');
+            const resultSection = document.getElementById('resultSection');
+            const loadingDiv = document.getElementById('loadingDiv');
+            const enhancedPromptDiv = document.getElementById('enhancedPrompt');
+            const generatedImage = document.getElementById('generatedImage');
+
+            // 显示加载状态
+            generateBtn.disabled = true;
+            generateBtn.textContent = '🤖 生成中...';
+            resultSection.style.display = 'block';
+            loadingDiv.style.display = 'block';
+            enhancedPromptDiv.style.display = 'none';
+            generatedImage.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/ai/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + userToken
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        style: style
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    // 显示两步生成信息
+                    const serviceInfo = `<strong>🔄 两步生成流程:</strong><br>
+                    📝 步骤1: ${data.data.promptService || 'DeepSeek'} 生成提示词<br>
+                    🎨 步骤2: ${data.data.imageService || '豆包'} 生成图片<br><br>
+                    <strong>AI优化后的提示词:</strong><br>${data.data.enhancedPrompt}`;
+                    
+                    enhancedPromptDiv.innerHTML = serviceInfo;
+                    enhancedPromptDiv.style.display = 'block';
+                    
+                    // 显示生成的图片
+                    generatedImage.src = data.data.imageUrl;
+                    generatedImage.style.display = 'block';
+                    
+                    showStatus('🎉 两步生成成功！DeepSeek + 豆包协作完成', 'success');
+                } else {
+                    showStatus('生成失败: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showStatus('生成失败: ' + error.message, 'error');
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🎨 生成图片';
+                loadingDiv.style.display = 'none';
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status ' + type;
+            statusDiv.textContent = message;
+            setTimeout(() => {
+                statusDiv.textContent = '';
+                statusDiv.className = '';
+            }, 5000);
+        }
+
+        // 页面加载时检查后端连接
+        window.onload = async function() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                if (data.status === 'OK') {
+                    showStatus('后端服务连接正常 ✅', 'success');
+                }
+            } catch (error) {
+                showStatus('后端服务连接失败 ❌', 'error');
+            }
+        };
+    </script>
+</body>
+</html> 

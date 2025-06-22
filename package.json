@@ -10,8 +10,14 @@
     "deploy:prod": "echo '部署到生产环境'",
     "init:db:test": "echo '初始化测试数据库'",
     "init:db:prod": "echo '初始化生产数据库'",
+    "db:setup": "node scripts/setup-database.js",
+    "db:init": "npm run db:setup",
     "lint": "eslint miniprogram/**/*.js",
-    "format": "prettier --write miniprogram/**/*.js"
+    "format": "prettier --write miniprogram/**/*.js",
+    "deploy:backend": "node scripts/deploy-backend.js",
+    "deploy:h5": "node scripts/deploy-h5-cos.js",
+    "deploy:all": "node scripts/deploy-all.js",
+    "deploy": "npm run deploy:all"
   },
   "repository": {
     "type": "git",
@@ -26,6 +32,9 @@
   ],
   "author": "Your Name",
   "license": "MIT",
+  "dependencies": {
+    "mongodb": "^6.3.0"
+  },
   "devDependencies": {
     "eslint": "^8.0.0",
     "prettier": "^2.8.0"
