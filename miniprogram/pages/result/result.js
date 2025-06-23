@@ -1,0 +1,77 @@
+Page({
+  data: {
+    prompt: '',
+    optimizedPrompt: '',
+    imageUrl: '',
+    workId: null
+  },
+
+  onLoad(options) {
+    console.log('结果页面参数:', options)
+    
+    const prompt = decodeURIComponent(options.prompt || '')
+    const optimizedPrompt = decodeURIComponent(options.optimizedPrompt || '')
+    const imageUrl = decodeURIComponent(options.imageUrl || '')
+    const workId = options.workId || null
+
+    this.setData({
+      prompt: prompt,
+      optimizedPrompt: optimizedPrompt,
+      imageUrl: imageUrl,
+      workId: workId
+    })
+  },
+
+  // 预览图片
+  previewImage() {
+    if (this.data.imageUrl) {
+      wx.previewImage({
+        current: this.data.imageUrl,
+        urls: [this.data.imageUrl]
+      })
+    }
+  },
+
+  // 复制提示词
+  copyPrompt() {
+    wx.setClipboardData({
+      data: this.data.optimizedPrompt,
+      success: () => {
+        wx.showToast({
+          title: '提示词已复制',
+          icon: 'success'
+        })
+      }
+    })
+  },
+
+  // 保存到作品
+  async saveToWorks() {
+    if (!this.data.workId) {
+      wx.showToast({
+        title: '作品ID无效',
+        icon: 'none'
+      })
+      return
+    }
+
+    wx.showToast({
+      title: '作品已保存',
+      icon: 'success'
+    })
+  },
+
+  // 重新生成
+  regenerate() {
+    wx.navigateBack()
+  },
+
+  // 分享功能
+  onShareAppMessage() {
+    return {
+      title: `我用AI生成了图片：${this.data.prompt}`,
+      path: '/pages/index/index',
+      imageUrl: this.data.imageUrl
+    }
+  }
+})

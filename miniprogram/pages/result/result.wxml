@@ -1,0 +1,57 @@
+<!--result.wxml-->
+<view class="container">
+  <!-- 页面标题 -->
+  <view class="header">
+    <text class="title">AI生成完成</text>
+    <text class="subtitle">以下是您的生成结果</text>
+  </view>
+
+  <!-- 生成的图片 -->
+  <view class="section" wx:if="{{imageUrl}}">
+    <view class="section-title">
+      <text>生成的图片</text>
+    </view>
+    <view class="image-card">
+      <image class="generated-image" src="{{imageUrl}}" mode="aspectFit" bindtap="previewImage" />
+    </view>
+  </view>
+
+  <!-- 原始输入 -->
+  <view class="section">
+    <view class="section-title">
+      <text>您的输入</text>
+    </view>
+    <view class="input-card">
+      <text class="input-text">{{prompt}}</text>
+    </view>
+  </view>
+
+  <!-- 优化结果 -->
+  <view class="section">
+    <view class="section-title">
+      <text>AI优化后的提示词</text>
+      <button class="copy-btn" bindtap="copyPrompt">复制</button>
+    </view>
+    <view class="result-card">
+      <text class="result-text">{{optimizedPrompt}}</text>
+    </view>
+  </view>
+
+  <!-- 使用说明 -->
+  <view class="tips-section">
+    <view class="tips-title">
+      <text>💡 使用提示</text>
+    </view>
+    <view class="tips-content">
+      <text class="tip-item">• 将优化后的提示词复制到Midjourney、DALL-E等AI绘图工具中使用</text>
+      <text class="tip-item">• 提示词包含了更专业的描述，能生成更高质量的图片</text>
+      <text class="tip-item">• 可以根据需要在提示词末尾添加画质参数，如 --ar 16:9 --v 6</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="actions">
+    <button class="action-btn secondary" bindtap="regenerate">重新生成</button>
+    <button class="action-btn primary" bindtap="saveToWorks">保存作品</button>
+  </view>
+</view>

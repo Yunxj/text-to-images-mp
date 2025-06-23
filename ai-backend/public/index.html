@@ -257,7 +257,7 @@
                     // 显示两步生成信息
                     const serviceInfo = `<strong>🔄 两步生成流程:</strong><br>
                     📝 步骤1: ${data.data.promptService || 'DeepSeek'} 生成提示词<br>
-                    🎨 步骤2: ${data.data.imageService || '豆包'} 生成图片<br><br>
+                    🎨 步骤2: ${data.data.imageService || '智谱'} 生成图片<br><br>
                     <strong>AI优化后的提示词:</strong><br>${data.data.enhancedPrompt}`;
                     
                     enhancedPromptDiv.innerHTML = serviceInfo;
@@ -267,7 +267,7 @@
                     generatedImage.src = data.data.imageUrl;
                     generatedImage.style.display = 'block';
                     
-                    showStatus('🎉 两步生成成功！DeepSeek + 豆包协作完成', 'success');
+                    showStatus('🎉 两步生成成功！DeepSeek + 智谱AI协作完成', 'success');
                 } else {
                     showStatus('生成失败: ' + data.message, 'error');
                 }

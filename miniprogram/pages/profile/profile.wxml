@@ -37,7 +37,7 @@
 
   <!-- 功能入口 -->
   <view class="function-grid">
-    <view class="function-item" bindtap="navigateTo" data-url="/pages/gallery/gallery">
+    <view class="function-item" bindtap="navigateTo" data-url="/pages/result/result">
       <view class="function-icon">🖼️</view>
       <text class="function-text">图片模板</text>
     </view>
@@ -59,7 +59,7 @@
   <view class="works-section">
     <view class="section-header">
       <text class="section-title">我的作品</text>
-      <text class="section-more" bindtap="navigateTo" data-url="/pages/gallery/gallery">查看全部</text>
+      <text class="section-more" bindtap="navigateTo" data-url="/pages/index/index">查看全部</text>
     </view>
     
     <view class="works-list" wx:if="{{recentWorks.length > 0}}">

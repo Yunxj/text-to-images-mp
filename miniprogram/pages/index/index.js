@@ -1,3 +1,5 @@
+const { aiAPI, userAPI, setToken } = require('../../utils/api')
+
 Page({
   data: {
     // 生成模式
@@ -34,7 +36,7 @@ Page({
 
   onLoad() {
     this.initCharacters()
-    this.loadUserData()
+    this.initUser()
   },
 
   // 初始化角色数据
@@ -69,12 +71,28 @@ Page({
     })
   },
 
-  // 加载用户数据
-  loadUserData() {
-    const app = getApp()
-    this.setData({
-      remainingCount: app.globalData.isVip ? 999 : (10 - app.globalData.generateCount)
-    })
+  // 初始化用户
+  async initUser() {
+    try {
+      // 首先尝试游客登录
+      const loginResult = await userAPI.guestLogin()
+      setToken(loginResult.token)
+      
+      // 获取用户信息
+      const userInfo = await userAPI.getUserInfo()
+      const app = getApp()
+      app.globalData.user = userInfo
+      
+      this.setData({
+        remainingCount: userInfo.isVip ? 999 : (10 - (userInfo.generateCount || 0))
+      })
+    } catch (error) {
+      console.error('用户初始化失败:', error)
+      // 设置默认值
+      this.setData({
+        remainingCount: 3
+      })
+    }
   },
 
   // 切换生成模式
@@ -211,7 +229,7 @@ Page({
 
       // 生成成功，跳转到结果页
       wx.navigateTo({
-        url: `/pages/result/result?images=${JSON.stringify(result.images)}&prompt=${inputText}`
+        url: `/pages/result/result?imageUrl=${encodeURIComponent(result.imageUrl)}&optimizedPrompt=${encodeURIComponent(result.optimizedPrompt)}&prompt=${encodeURIComponent(inputText)}&workId=${result.workId}`
       })
 
       // 更新生成次数
@@ -230,35 +248,40 @@ Page({
     }
   },
 
-  // 调用AI生成API（模拟）
-  callAIGenerateAPI(params) {
-    return new Promise((resolve, reject) => {
-      // 模拟API调用
-      setTimeout(() => {
-        if (Math.random() > 0.1) { // 90%成功率
-          resolve({
-            images: params.mode === 'single' ? [
-              '/images/generated/sample1.jpg'
-            ] : [
-              '/images/generated/sample1.jpg',
-              '/images/generated/sample2.jpg'
-            ]
-          })
-        } else {
-          reject(new Error('生成失败'))
-        }
-      }, 3000) // 模拟3秒生成时间
-    })
+  // 调用AI生成API
+  async callAIGenerateAPI(params) {
+    try {
+      const result = await aiAPI.generateImage(params)
+      return {
+        imageUrl: result.imageUrl, // 生成的图片URL
+        optimizedPrompt: result.enhancedPrompt, // 优化后的提示词
+        workId: result.workId, // 作品ID
+        originalPrompt: result.prompt // 原始输入
+      }
+    } catch (error) {
+      console.error('AI生成失败:', error)
+      throw error
+    }
   },
 
   // 更新生成次数
-  updateGenerateCount() {
-    const app = getApp()
-    app.globalData.generateCount += 1
-    
-    this.setData({
-      remainingCount: app.globalData.isVip ? 999 : (10 - app.globalData.generateCount)
-    })
+  async updateGenerateCount() {
+    try {
+      // 获取最新用户信息
+      const userInfo = await userAPI.getUserInfo()
+      const app = getApp()
+      app.globalData.user = userInfo
+      
+      this.setData({
+        remainingCount: userInfo.isVip ? 999 : Math.max(0, 10 - (userInfo.generateCount || 0))
+      })
+    } catch (error) {
+      console.error('更新生成次数失败:', error)
+      // 本地更新作为备选
+      this.setData({
+        remainingCount: Math.max(0, this.data.remainingCount - 1)
+      })
+    }
   },
 
   // 显示VIP弹窗
