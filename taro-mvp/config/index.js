@@ -15,6 +15,13 @@ const config = {
     '@tarojs/plugin-framework-react'
   ],
   defineConstants: {
+    ENABLE_INNER_HTML: true,
+    ENABLE_ADJACENT_HTML: true,
+    ENABLE_SIZE_APIS: true,
+    ENABLE_TEMPLATE_CONTENT: true,
+    ENABLE_MUTATION_OBSERVER: true,
+    ENABLE_CLONE_NODE: true,
+    ENABLE_CONTAINS: true
   },
   alias: {
     '@': path.resolve(__dirname, '../src')
@@ -31,6 +38,18 @@ const config = {
     enable: false // Webpack 持久化缓存配置，建议开启。默认配置请参考：https://docs.taro.zone/docs/config-detail#cache
   },
   mini: {
+    webpackChain (chain) {
+      chain.plugin('definePlugin')
+        .use(require('webpack').DefinePlugin, [{
+          ENABLE_INNER_HTML: true,
+          ENABLE_ADJACENT_HTML: true,
+          ENABLE_SIZE_APIS: true,
+          ENABLE_TEMPLATE_CONTENT: true,
+          ENABLE_MUTATION_OBSERVER: true,
+          ENABLE_CLONE_NODE: true,
+          ENABLE_CONTAINS: true
+        }])
+    },
     postcss: {
       pxtransform: {
         enable: true,

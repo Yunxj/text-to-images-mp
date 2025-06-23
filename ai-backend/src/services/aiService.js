@@ -1,7 +1,6 @@
 const axios = require('axios');
 const database = require('../config/sqlite');
 const { AIServiceError } = require('../middleware/errorHandler');
-const { Signer } = require('@volcengine/openapi');
 
 class AIService {
   constructor() {
@@ -19,15 +18,14 @@ class AIService {
 
     this.imageServices = [
       {
-        name: 'doubao',
-        apiKey: process.env.DOUBAO_API_KEY,
-        // 使用火山引擎豆包的图片生成API端点
-        baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
-        // 使用专门的豆包图片生成模型
-        model: 'doubao-seedream-3.0-t2i',
+        name: 'zhipu',
+        apiKey: process.env.ZHIPU_API_KEY,
+        baseURL: 'https://open.bigmodel.cn/api/paas/v4',
+        model: 'cogview-3',
         type: 'image_generator',
-        enabled: !!process.env.DOUBAO_API_KEY,
-        region: 'cn-beijing'
+        enabled: !!process.env.ZHIPU_API_KEY,
+        priority: 1, // 主要服务
+        description: '智谱AI GLM-4V CogView-3 - 主要图像生成服务'
       }
     ].filter(service => service.enabled);
 
@@ -50,7 +48,12 @@ class AIService {
       console.log('没有配置图片生成服务，使用模拟模式');
       return { name: 'mock', type: 'image_generator', enabled: true };
     }
-    return this.imageServices[0]; // 使用豆包
+    
+    // 按优先级排序并选择最高优先级的服务
+    const sortedServices = this.imageServices.sort((a, b) => (a.priority || 99) - (b.priority || 99));
+    const selectedService = sortedServices[0];
+    console.log(`选择图片生成服务: ${selectedService.name} (优先级: ${selectedService.priority || '默认'})`);
+    return selectedService;
   }
 
   // 调用DeepSeek生成提示词
@@ -96,57 +99,26 @@ class AIService {
     }
   }
 
-  // 使用火山引擎SDK生成签名
-  generateVolcengineSignature(method, pathname, body, region) {
+
+
+  // 调用智谱AI生成图片 - GLM-4V CogView-3
+  async generateImageWithZhipu(service, enhancedPrompt) {
     try {
-      const requestObj = {
-        region,
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        method,
-        body,
-        pathname
-      };
-
-      const signer = new Signer(requestObj, 'air');
-      signer.addAuthorization({
-        accessKeyId: process.env.VOLCENGINE_ACCESS_KEY,
-        secretKey: process.env.VOLCENGINE_SECRET_KEY
-      });
-
-      return requestObj.headers;
-    } catch (error) {
-      console.error('生成火山引擎签名失败:', error);
-      throw new Error('火山引擎签名生成失败');
-    }
-  }
-
-  // 调用豆包生成图片 - 使用正确的图片生成API
-  async generateImageWithDoubao(service, enhancedPrompt) {
-    try {
-      console.log('调用豆包Seedream图片生成API...');
+      console.log('调用智谱AI CogView-3图片生成API...');
       console.log('使用模型:', service.model);
       console.log('提示词:', enhancedPrompt);
 
-      // 根据火山引擎官方文档，使用专门的图片生成API
       const requestData = {
         model: service.model,
         prompt: enhancedPrompt,
-        // 图片生成参数
-        width: 1024,
-        height: 1024,
-        steps: 20,
-        scale: 7.5,
-        n: 1, // 生成图片数量
+        size: "1024x1024",
+        n: 1,
         quality: "standard",
-        response_format: "url" // 返回URL格式
+        response_format: "url"
       };
 
-      console.log('请求数据:', JSON.stringify(requestData, null, 2));
+      console.log('智谱AI请求数据:', JSON.stringify(requestData, null, 2));
 
-      // 使用豆包专门的图片生成API端点
       const response = await axios.post(`${service.baseURL}/images/generations`, requestData, {
         headers: {
           'Authorization': `Bearer ${service.apiKey}`,
@@ -155,30 +127,29 @@ class AIService {
         timeout: 120000 // 图片生成需要更长时间
       });
 
-      console.log('豆包API响应状态:', response.status);
-      console.log('豆包API响应数据:', JSON.stringify(response.data, null, 2));
+      console.log('智谱AI响应状态:', response.status);
+      console.log('智谱AI响应数据:', JSON.stringify(response.data, null, 2));
 
-      // 根据豆包API文档，检查响应格式
+      // 检查智谱AI响应格式
       if (response.data && response.data.data && response.data.data.length > 0) {
         const imageData = response.data.data[0];
         if (imageData.url) {
-          console.log('豆包生成图片成功，URL:', imageData.url);
+          console.log('智谱AI生成图片成功，URL:', imageData.url);
           return imageData.url;
         } else if (imageData.b64_json) {
-          // 如果返回base64格式，可以转换为data URL
           const dataUrl = `data:image/png;base64,${imageData.b64_json}`;
-          console.log('豆包生成图片成功，返回base64格式');
+          console.log('智谱AI生成图片成功，返回base64格式');
           return dataUrl;
         } else {
-          console.error('豆包返回的图片数据格式异常:', imageData);
-          throw new Error('豆包返回的图片数据中没有找到URL或base64数据');
+          console.error('智谱AI返回的图片数据格式异常:', imageData);
+          throw new Error('智谱AI返回的图片数据中没有找到URL或base64数据');
         }
       } else {
-        console.error('豆包API返回数据格式错误:', response.data);
-        throw new Error('豆包服务返回数据格式不符合预期');
+        console.error('智谱AI返回数据格式错误:', response.data);
+        throw new Error('智谱AI服务返回数据格式不符合预期');
       }
     } catch (error) {
-      console.error('豆包图片生成详细错误信息:');
+      console.error('智谱AI图片生成详细错误信息:');
       console.error('错误类型:', error.constructor.name);
       console.error('错误消息:', error.message);
       
@@ -187,20 +158,20 @@ class AIService {
         console.error('响应头:', error.response.headers);
         console.error('响应数据:', error.response.data);
         
-        // 特殊处理404错误
-        if (error.response.status === 404) {
-          console.error('404错误可能原因:');
-          console.error('1. API端点路径不正确');
-          console.error('2. 模型名称不正确');
-          console.error('3. API密钥权限不足');
-          console.error('4. 服务未启用或不可用');
+        // 根据智谱AI的错误码进行处理
+        if (error.response.status === 401) {
+          console.error('401错误: API密钥无效或过期');
+        } else if (error.response.status === 400) {
+          console.error('400错误: 请求参数错误，可能是prompt格式问题');
+        } else if (error.response.status === 429) {
+          console.error('429错误: 请求频率过高，触发限流');
         }
       } else if (error.request) {
         console.error('请求配置:', error.config);
-        console.error('没有收到响应');
+        console.error('网络连接问题，无法访问智谱AI服务');
       }
       
-      throw new AIServiceError(`豆包图片生成失败: ${error.message}`);
+      throw new AIServiceError(`智谱AI图片生成失败: ${error.message}`);
     }
   }
 
@@ -222,26 +193,33 @@ class AIService {
         console.log('DeepSeek生成的提示词:', enhancedPrompt);
       }
 
-      // 第二步：使用豆包生成图片
+      // 第二步：使用AI服务生成图片
       const imageService = this.selectImageService();
       console.log(`步骤2: 使用 ${imageService.name} 生成图片`);
 
       let imageUrl;
       if (imageService.name === 'mock') {
-        // 模拟豆包生成图片
+        // 模拟生成图片
         await new Promise(resolve => setTimeout(resolve, 3000)); // 模拟生成时间
         imageUrl = `https://picsum.photos/1024/1024?random=${Math.floor(Math.random() * 1000)}&t=${Date.now()}`;
-        console.log('模拟模式 - 豆包图片URL:', imageUrl);
+        console.log('模拟模式 - 图片URL:', imageUrl);
       } else {
         try {
-          imageUrl = await this.generateImageWithDoubao(imageService, enhancedPrompt);
-          console.log('豆包生成的图片URL:', imageUrl);
+          // 使用智谱AI生成图片
+          if (imageService.name === 'zhipu') {
+            imageUrl = await this.generateImageWithZhipu(imageService, enhancedPrompt);
+            console.log('智谱AI生成的图片URL:', imageUrl);
+          } else {
+            throw new Error(`不支持的图片生成服务: ${imageService.name}`);
+          }
         } catch (error) {
-          console.log('豆包API调用失败，回退到模拟模式:', error.message);
-          // 回退到模拟模式
+          console.log(`智谱AI服务调用失败，回退到模拟模式:`, error.message);
+          
+          // 直接回退到模拟模式
+          console.log('智谱AI服务失败，使用模拟模式');
           await new Promise(resolve => setTimeout(resolve, 2000));
           imageUrl = `https://picsum.photos/1024/1024?random=${Math.floor(Math.random() * 1000)}&t=${Date.now()}`;
-          console.log('回退模拟模式 - 图片URL:', imageUrl);
+          console.log('模拟模式 - 图片URL:', imageUrl);
         }
       }
 
