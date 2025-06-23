@@ -1,6 +1,6 @@
 // API 基础配置
-const API_BASE_URL = 'http://localhost:3000/api'  // 开发环境
-// const API_BASE_URL = 'https://your-domain.com/api'  // 生产环境
+// const API_BASE_URL = 'http://localhost:3000/api'  // 开发环境
+const API_BASE_URL = 'https://your-project.vercel.app/api'  // 生产环境
 
 // 获取存储的token
 function getToken() {
