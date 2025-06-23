@@ -176,7 +176,7 @@ async function insertInitialData(db) {
       key: "ai_providers",
       value: {
         deepseek: { priority: 1, cost: 0.002, enabled: true },
-        doubao: { priority: 2, cost: 0.008, enabled: true },
+        // 已移除豆包，使用智谱AI作为主要服务
         tongyi: { priority: 3, cost: 0.02, enabled: true },
         wenxin: { priority: 4, cost: 0.03, enabled: true }
       },

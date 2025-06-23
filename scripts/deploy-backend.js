@@ -117,7 +117,7 @@ async function setupEnvironmentVariables() {
     NODE_ENV: 'production',
     MONGODB_URI: '',
     DEEPSEEK_API_KEY: '',
-    DOUBAO_API_KEY: '',
+    ZHIPU_API_KEY: '',
     WECHAT_APP_ID: '',
     WECHAT_APP_SECRET: ''
   };
@@ -176,7 +176,7 @@ async function createServerlessConfig(target) {
           NODE_ENV: 'production',
           MONGODB_URI: '@mongodb_uri',
           DEEPSEEK_API_KEY: '@deepseek_api_key',
-          DOUBAO_API_KEY: '@doubao_api_key',
+          ZHIPU_API_KEY: '@zhipu_api_key',
           WECHAT_APP_ID: '@wechat_app_id',
           WECHAT_APP_SECRET: '@wechat_app_secret'
         }
@@ -204,7 +204,7 @@ functions:
       NODE_ENV: production
       MONGODB_URI: \${env:MONGODB_URI}
       DEEPSEEK_API_KEY: \${env:DEEPSEEK_API_KEY}
-      DOUBAO_API_KEY: \${env:DOUBAO_API_KEY}
+      ZHIPU_API_KEY: \${env:ZHIPU_API_KEY}
       WECHAT_APP_ID: \${env:WECHAT_APP_ID}
       WECHAT_APP_SECRET: \${env:WECHAT_APP_SECRET}
     timeout: 30
@@ -230,7 +230,7 @@ provider:
     NODE_ENV: production
     MONGODB_URI: \${env:MONGODB_URI}
     DEEPSEEK_API_KEY: \${env:DEEPSEEK_API_KEY}
-    DOUBAO_API_KEY: \${env:DOUBAO_API_KEY}
+    ZHIPU_API_KEY: \${env:ZHIPU_API_KEY}
     WECHAT_APP_ID: \${env:WECHAT_APP_ID}
     WECHAT_APP_SECRET: \${env:WECHAT_APP_SECRET}
 
@@ -459,7 +459,8 @@ async function showDeploymentInfo(target) {
     console.log('\n🔧 Vercel环境变量设置:');
     console.log('   vercel env add MONGODB_URI');
     console.log('   vercel env add DEEPSEEK_API_KEY');
-    console.log('   vercel env add DOUBAO_API_KEY');
+    console.log('   vercel env add ZHIPU_API_KEY');
+    console.log('   vercel env add WECHAT_APP_ID');
   }
 }
 
