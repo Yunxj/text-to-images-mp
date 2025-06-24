@@ -118,7 +118,5 @@ class Database {
 // 创建单例实例
 const database = new Database();
 
-// 自动连接数据库
-database.connect().catch(console.error);
-
+// 延迟连接 - 只在需要时连接
 module.exports = database; 
