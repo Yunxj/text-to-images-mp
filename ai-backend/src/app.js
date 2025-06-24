@@ -54,7 +54,7 @@ app.use('*', (req, res) => {
 app.use(errorHandler);
 
 // 本地开发启动
-if (process.env.NODE_ENV !== 'production') {
+if (require.main === module && process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`服务器运行在端口 ${PORT}`);
@@ -64,4 +64,7 @@ if (process.env.NODE_ENV !== 'production') {
 // Serverless导出
 const handler = serverlessExpress({ app });
 
-module.exports = { app, handler }; 
+// 导出配置
+module.exports = app;
+module.exports.default = app;
+module.exports.handler = handler; 

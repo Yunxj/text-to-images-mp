@@ -1,6 +1,9 @@
 // API 基础配置
+// ✅ 已配置为实际的Vercel部署地址
 // const API_BASE_URL = 'http://localhost:3000/api'  // 开发环境
-const API_BASE_URL = 'https://your-project.vercel.app/api'  // 生产环境
+const API_BASE_URL = 'https://text-to-images-mp-fvep.vercel.app/api'  // 生产环境
+
+// 🎉 配置完成！Vercel URL: https://text-to-images-mp-rotv.vercel.app
 
 // 获取存储的token
 function getToken() {

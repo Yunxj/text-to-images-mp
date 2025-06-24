@@ -1,9 +1,10 @@
 import Taro from '@tarojs/taro'
 
 // API基础配置
+// ✅ 已配置为实际的Vercel部署地址: https://text-to-images-mp-rotv.vercel.app
 const API_BASE_URL = process.env.NODE_ENV === 'development' 
   ? 'http://localhost:3000/api'
-  : 'https://your-api-domain.com/api'
+  : 'https://text-to-images-mp-fvep.vercel.app/api'
 
 // 请求拦截器
 const request = (options: any) => {
