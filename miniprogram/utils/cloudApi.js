@@ -105,6 +105,17 @@ const aiAPI = {
   // 检查服务状态
   checkServiceStatus() {
     return callCloudFunction('aiGenerate', 'getServiceStatus')
+  },
+
+  // 获取每日使用量统计
+  getDailyUsage() {
+    // 获取全局用户信息
+    const app = getApp()
+    const userInfo = app.globalData.userInfo
+    
+    return callCloudFunction('aiGenerate', 'getDailyUsage', {
+      userId: userInfo?.id
+    })
   }
 }
 

@@ -6,6 +6,13 @@ cloud.init({
 
 const db = cloud.database()
 
+// 每日AI生成限制配置
+const DAILY_LIMITS = {
+  free: 50,     // 免费用户每日50次
+  vip: 200,     // VIP用户每日200次
+  admin: 1000   // 管理员每日1000次
+}
+
 // 云函数入口函数
 exports.main = async (event, context) => {
   const { action, data } = event
@@ -19,6 +26,8 @@ exports.main = async (event, context) => {
         return await getGenerateHistory(data, wxContext)
       case 'getServiceStatus':
         return await getServiceStatus()
+      case 'getDailyUsage':
+        return await getDailyUsage(data, wxContext)
       default:
         return {
           code: 400,
@@ -32,6 +41,103 @@ exports.main = async (event, context) => {
       message: error.message || '服务器内部错误'
     }
   }
+}
+
+// 获取今日使用次数统计
+async function getDailyUsage(data, wxContext) {
+  const { userId } = data
+  
+  let user
+  if (userId) {
+    try {
+      const userQuery = await db.collection('users').doc(userId).get()
+      user = userQuery.data
+    } catch (error) {
+      console.error('通过userId查找用户失败:', error)
+    }
+  }
+  
+  if (!user && wxContext.OPENID) {
+    const userQuery = await db.collection('users').where({
+      openid: wxContext.OPENID
+    }).get()
+    user = userQuery.data[0]
+  }
+
+  if (!user) {
+    throw new Error('用户不存在，请先登录')
+  }
+
+  // 获取今日使用统计
+  const dailyUsage = await getTodayUsageCount(user._id)
+  const userType = getUserType(user)
+  const dailyLimit = DAILY_LIMITS[userType]
+  
+  return {
+    code: 200,
+    data: {
+      todayUsed: dailyUsage,
+      dailyLimit: dailyLimit,
+      remaining: Math.max(0, dailyLimit - dailyUsage),
+      userType: userType,
+      resetTime: getNextResetTime()
+    }
+  }
+}
+
+// 检查今日生成次数
+async function checkDailyLimit(userId, userType) {
+  const todayUsage = await getTodayUsageCount(userId)
+  const dailyLimit = DAILY_LIMITS[userType]
+  
+  console.log(`用户 ${userId} 今日已使用: ${todayUsage}/${dailyLimit}`)
+  
+  if (todayUsage >= dailyLimit) {
+    throw new Error(`今日生成次数已达上限（${dailyLimit}次），明日0点重置`)
+  }
+  
+  return {
+    used: todayUsage,
+    limit: dailyLimit,
+    remaining: dailyLimit - todayUsage
+  }
+}
+
+// 获取今日使用次数
+async function getTodayUsageCount(userId) {
+  const today = new Date()
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000)
+  
+  try {
+    const usageQuery = await db.collection('works')
+      .where({
+        userId: userId,
+        status: db.command.neq('failed'), // 不计算失败的生成
+        createdAt: db.command.gte(startOfDay).and(db.command.lt(endOfDay))
+      })
+      .count()
+    
+    return usageQuery.total || 0
+  } catch (error) {
+    console.error('获取今日使用次数失败:', error)
+    return 0
+  }
+}
+
+// 获取用户类型
+function getUserType(user) {
+  if (user.userType === 'admin') return 'admin'
+  if (user.vipLevel > 0) return 'vip'
+  return 'free'
+}
+
+// 获取下次重置时间
+function getNextResetTime() {
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  tomorrow.setHours(0, 0, 0, 0)
+  return tomorrow
 }
 
 // 生成图片
@@ -70,8 +176,20 @@ async function generateImage(data, wxContext) {
     throw new Error('用户不存在，请先登录')
   }
 
-  // 检查积分
-  if (user.credits <= 0 && user.vipLevel === 0) {
+  // 获取用户类型并检查每日限制
+  const userType = getUserType(user)
+  console.log(`用户类型: ${userType}, VIP等级: ${user.vipLevel}`)
+  
+  try {
+    const limitCheck = await checkDailyLimit(user._id, userType)
+    console.log('每日限制检查通过:', limitCheck)
+  } catch (limitError) {
+    console.error('每日限制检查失败:', limitError.message)
+    throw limitError
+  }
+
+  // 检查积分（VIP用户不消耗积分）
+  if (userType === 'free' && user.credits <= 0) {
     throw new Error('积分不足，请充值或升级VIP')
   }
 
@@ -107,22 +225,81 @@ async function generateImage(data, wxContext) {
       createdAt: new Date()
     }
 
-    await db.collection('works').add({
-      data: work
-    })
+    // 保存作品记录 - 增加错误处理和重试机制
+    let workSaved = false
+    let retryCount = 0
+    const maxRetries = 3
 
-    // 更新用户积分和生成次数
-    const updateData = {
-      generateCount: db.command.inc(1)
+    while (!workSaved && retryCount < maxRetries) {
+      try {
+        console.log(`尝试保存作品记录，第${retryCount + 1}次...`)
+        await db.collection('works').add({
+          data: work
+        })
+        workSaved = true
+        console.log('✅ 作品记录保存成功')
+      } catch (saveError) {
+        retryCount++
+        console.error(`❌ 作品记录保存失败 (尝试${retryCount}/${maxRetries}):`, saveError)
+        
+        if (retryCount >= maxRetries) {
+          // 最后一次尝试失败，记录详细错误信息
+          console.error('🚨 作品记录保存彻底失败，用户数据可能丢失!')
+          
+          // 尝试保存紧急备份记录
+          try {
+            await db.collection('emergency_backup').add({
+              data: {
+                ...work,
+                backupReason: 'works_collection_save_failed',
+                originalError: saveError.message,
+                retryCount: retryCount,
+                timestamp: new Date()
+              }
+            })
+            console.log('💾 紧急备份记录已保存')
+          } catch (backupError) {
+            console.error('🆘 连紧急备份都失败了:', backupError)
+          }
+          
+          throw new Error('数据保存失败，请稍后重试')
+        } else {
+          // 等待后重试
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount))
+        }
+      }
+    }
+
+    // 更新用户积分和生成次数 - 增加错误处理
+    try {
+      const updateData = {
+        generateCount: db.command.inc(1)
+      }
+      
+      // 只有免费用户需要扣除积分
+      if (userType === 'free') {
+        updateData.credits = db.command.inc(-1)
+      }
+
+      await db.collection('users').doc(user._id).update({
+        data: updateData
+      })
+      console.log('✅ 用户信息更新成功')
+    } catch (userUpdateError) {
+      console.error('⚠️  用户信息更新失败，但作品已保存:', userUpdateError)
+      // 用户信息更新失败不影响作品记录，继续执行
+    }
+
+    // 获取更新后的今日使用次数
+    let updatedUsage = 0
+    try {
+      updatedUsage = await getTodayUsageCount(user._id)
+    } catch (countError) {
+      console.error('⚠️  获取今日使用次数失败:', countError)
+      // 使用默认值，不影响主流程
     }
     
-    if (user.vipLevel === 0) {
-      updateData.credits = db.command.inc(-1)
-    }
-
-    await db.collection('users').doc(user._id).update({
-      data: updateData
-    })
+    const dailyLimit = DAILY_LIMITS[userType]
 
     return {
       code: 200,
@@ -132,25 +309,59 @@ async function generateImage(data, wxContext) {
         imageUrl: work.imageUrl,
         prompt: work.prompt,
         enhancedPrompt: work.enhancedPrompt,
-        remainingCredits: user.vipLevel > 0 ? 999 : Math.max(0, user.credits - 1)
+        remainingCredits: userType === 'free' ? Math.max(0, user.credits - 1) : 999,
+        dailyUsage: {
+          used: updatedUsage,
+          limit: dailyLimit,
+          remaining: Math.max(0, dailyLimit - updatedUsage)
+        }
       }
     }
 
   } catch (aiError) {
     console.error('AI生成失败:', aiError)
     
-    // 记录失败的生成请求
-    await db.collection('works').add({
-      data: {
+    // 记录失败的生成请求 - 增加错误处理
+    try {
+      const failedWork = {
         id: `work_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId: user._id,
         openid: user.openid || null,
         prompt: fullPrompt,
+        originalPrompt: prompt,
+        character,
+        style,
+        emotion,
+        mode,
         status: 'failed',
         errorMessage: aiError.message,
         createdAt: new Date()
       }
-    })
+
+      await db.collection('works').add({
+        data: failedWork
+      })
+      console.log('✅ 失败记录已保存')
+    } catch (failSaveError) {
+      console.error('❌ 连失败记录都保存不了:', failSaveError)
+      
+      // 尝试保存到紧急备份
+      try {
+        await db.collection('emergency_backup').add({
+          data: {
+            userId: user._id,
+            prompt: fullPrompt,
+            status: 'failed',
+            errorMessage: aiError.message,
+            backupReason: 'failed_record_save_failed',
+            timestamp: new Date()
+          }
+        })
+        console.log('💾 失败记录的紧急备份已保存')
+      } catch (backupError) {
+        console.error('🆘 失败记录的紧急备份也失败了:', backupError)
+      }
+    }
 
     throw new Error('图片生成失败，请稍后重试')
   }

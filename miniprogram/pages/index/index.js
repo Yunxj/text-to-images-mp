@@ -30,6 +30,14 @@ Page({
     isGenerating: false,
     remainingCount: 3,
     
+    // 每日使用量
+    dailyUsage: {
+      used: 0,
+      limit: 50,
+      remaining: 50,
+      userType: 'free'
+    },
+    
     // 弹窗
     showVipModal: false
   },
@@ -37,6 +45,7 @@ Page({
   onLoad() {
     this.initCharacters()
     this.initUser()
+    this.loadDailyUsage()
   },
 
   // 初始化角色数据
@@ -90,6 +99,21 @@ Page({
       this.setData({
         remainingCount: 0
       })
+    }
+  },
+
+  // 加载每日使用量
+  async loadDailyUsage() {
+    try {
+      const result = await aiAPI.getDailyUsage()
+      if (result && result.data) {
+        this.setData({
+          dailyUsage: result.data
+        })
+        console.log('每日使用量:', result.data)
+      }
+    } catch (error) {
+      console.error('获取每日使用量失败:', error)
     }
   },
 
@@ -184,7 +208,7 @@ Page({
 
   // 生成图片
   async generateImage() {
-    const { inputText, selectedCharacter, currentMode, currentTextType, emotionText } = this.data
+    const { inputText, selectedCharacter, currentMode, currentTextType, emotionText, dailyUsage } = this.data
 
     // 验证输入
     if (!inputText.trim()) {
@@ -199,6 +223,23 @@ Page({
       wx.showToast({
         title: '请选择一个角色',
         icon: 'none'
+      })
+      return
+    }
+
+    // 检查每日限制
+    if (dailyUsage.remaining <= 0) {
+      wx.showModal({
+        title: '今日生成次数已用完',
+        content: `您今日已使用 ${dailyUsage.used}/${dailyUsage.limit} 次，明日0点重置。升级VIP可获得更多次数。`,
+        showCancel: true,
+        cancelText: '知道了',
+        confirmText: '升级VIP',
+        success: (res) => {
+          if (res.confirm) {
+            this.showVipModal()
+          }
+        }
       })
       return
     }
@@ -224,21 +265,44 @@ Page({
         url: `/pages/result/result?workId=${result.workId}&imageUrl=${encodeURIComponent(result.imageUrl)}&prompt=${encodeURIComponent(result.prompt)}&optimizedPrompt=${encodeURIComponent(result.enhancedPrompt || result.prompt)}`
       })
 
-      // 更新剩余次数
+      // 更新剩余次数和每日使用量
       this.updateRemainingCount()
+      this.loadDailyUsage()
+
+      // 如果返回了每日使用量数据，直接更新
+      if (result.dailyUsage) {
+        this.setData({
+          dailyUsage: result.dailyUsage
+        })
+      }
 
     } catch (error) {
       console.error('生成失败:', error)
-      wx.showToast({
-        title: error.message || '生成失败，请重试',
-        icon: 'none'
-      })
+      
+      // 检查是否为每日限制错误
+      if (error.message && error.message.includes('今日生成次数已达上限')) {
+        wx.showModal({
+          title: '今日生成次数已用完',
+          content: error.message,
+          showCancel: true,
+          cancelText: '知道了',
+          confirmText: '升级VIP',
+          success: (res) => {
+            if (res.confirm) {
+              this.showVipModal()
+            }
+          }
+        })
+      } else {
+        wx.showToast({
+          title: error.message || '生成失败，请重试',
+          icon: 'none'
+        })
+      }
     } finally {
       this.setData({
         isGenerating: false
-
       })
-
     }
   },
 
