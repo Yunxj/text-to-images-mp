@@ -1,5 +1,5 @@
 {
-  "description": "项目配置文件",
+  "description": "AI绘图助手小程序项目配置文件",
   "packOptions": {
     "ignore": [],
     "include": []
@@ -7,7 +7,7 @@
   "setting": {
     "bundle": false,
     "userConfirmedBundleSwitch": false,
-    "urlCheck": true,
+    "urlCheck": false,
     "scopeDataCheck": false,
     "coverView": true,
     "es6": true,
@@ -38,19 +38,25 @@
       "disablePlugins": [],
       "outputPath": ""
     },
-    "useStaticServer": true,
+    "compileWorklet": false,
+    "localPlugins": false,
     "disableUseStrict": false,
-    "useCompilerPlugins": false
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true
   },
   "compileType": "miniprogram",
-  "libVersion": "2.19.4",
-  "appid": "wx1234567890abcdef",
-  "projectname": "AI绘图助手",
+  "libVersion": "3.8.9",
+  "appid": "wx324621f2375d3398",
+  "projectname": "ai-image-generator",
   "condition": {},
   "editorSetting": {
     "tabIndent": "insertSpaces",
     "tabSize": 2
   },
-  "miniprogramRoot": "miniprogram/",
-  "cloudfunctionRoot": "cloudfunctions/"
+  "simulatorPluginLibVersion": {},
+  "cloudfunctionRoot": "miniprogram/cloudfunctions/",
+  "cloudbaseRoot": "miniprogram/",
+  "cloudbaseEnv": "cloud1-7gndy7e31d73bb76"
 } 

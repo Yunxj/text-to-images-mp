@@ -28,7 +28,7 @@
 ### 更新环境变量
 在 `ai-backend/.env` 文件中添加：
 ```bash
-ZHIPU_API_KEY=your_actual_api_key_here
+ZHIPU_API_KEY=437d675ba4764a11b6ad9d593c1341fe.0xdif28y8zidmdtn
 ```
 
 ### 测试API连接

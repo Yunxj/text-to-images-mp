@@ -32,7 +32,7 @@
 
 ```bash
 # 智谱AI配置（主要图像生成服务）
-ZHIPU_API_KEY=your_zhipu_api_key_here
+ZHIPU_API_KEY=437d675ba4764a11b6ad9d593c1341fe.0xdif28y8zidmdtn
 
 # DeepSeek配置（提示词生成服务）
 DEEPSEEK_API_KEY=sk-33eee9a37ac841d9b6424700de95c546

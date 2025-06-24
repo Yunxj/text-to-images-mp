@@ -1,4 +1,4 @@
-const { aiAPI, userAPI, setToken } = require('../../utils/api')
+const { aiAPI, userAPI } = require('../../utils/cloudApi')
 
 Page({
   data: {
@@ -74,23 +74,21 @@ Page({
   // 初始化用户
   async initUser() {
     try {
-      // 首先尝试游客登录
-      const loginResult = await userAPI.guestLogin()
-      setToken(loginResult.token)
-      
-      // 获取用户信息
-      const userInfo = await userAPI.getUserInfo()
       const app = getApp()
-      app.globalData.user = userInfo
-      
-      this.setData({
-        remainingCount: userInfo.isVip ? 999 : (10 - (userInfo.generateCount || 0))
-      })
+      if (app.globalData.userInfo) {
+        this.setData({
+          remainingCount: app.globalData.userInfo.isVip ? 999 : Math.max(0, app.globalData.userInfo.credits || 0)
+        })
+      } else {
+        // 如果没有用户信息，等待登录完成
+        setTimeout(() => {
+          this.initUser()
+        }, 1000)
+      }
     } catch (error) {
       console.error('用户初始化失败:', error)
-      // 设置默认值
       this.setData({
-        remainingCount: 3
+        remainingCount: 0
       })
     }
   },
@@ -199,16 +197,8 @@ Page({
 
     if (!selectedCharacter.id) {
       wx.showToast({
-        title: '请选择角色',
+        title: '请选择一个角色',
         icon: 'none'
-      })
-      return
-    }
-
-    // 检查生成次数
-    if (this.data.remainingCount <= 0) {
-      this.setData({
-        showVipModal: true
       })
       return
     }
@@ -218,90 +208,71 @@ Page({
     })
 
     try {
-      // 调用AI生成接口
-      const result = await this.callAIGenerateAPI({
+      // 使用云开发API生成图片
+      const result = await aiAPI.generateImage({
         text: inputText,
         character: selectedCharacter,
-        mode: currentMode,
         textType: currentTextType,
-        emotion: emotionText
+        emotion: emotionText,
+        mode: currentMode
       })
 
-      // 生成成功，跳转到结果页
+      console.log('生成成功:', result)
+
+      // 跳转到结果页面
       wx.navigateTo({
-        url: `/pages/result/result?imageUrl=${encodeURIComponent(result.imageUrl)}&optimizedPrompt=${encodeURIComponent(result.optimizedPrompt)}&prompt=${encodeURIComponent(inputText)}&workId=${result.workId}`
+        url: `/pages/result/result?workId=${result.workId}&imageUrl=${encodeURIComponent(result.imageUrl)}&prompt=${encodeURIComponent(result.prompt)}&optimizedPrompt=${encodeURIComponent(result.enhancedPrompt || result.prompt)}`
       })
 
-      // 更新生成次数
-      this.updateGenerateCount()
+      // 更新剩余次数
+      this.updateRemainingCount()
 
     } catch (error) {
-      console.error('生成图片失败:', error)
+      console.error('生成失败:', error)
       wx.showToast({
-        title: '生成失败，请重试',
+        title: error.message || '生成失败，请重试',
         icon: 'none'
       })
     } finally {
       this.setData({
         isGenerating: false
+
       })
+
     }
   },
 
-  // 调用AI生成API
-  async callAIGenerateAPI(params) {
+  // 更新剩余生成次数
+  async updateRemainingCount() {
     try {
-      const result = await aiAPI.generateImage(params)
-      return {
-        imageUrl: result.imageUrl, // 生成的图片URL
-        optimizedPrompt: result.enhancedPrompt, // 优化后的提示词
-        workId: result.workId, // 作品ID
-        originalPrompt: result.prompt // 原始输入
-      }
-    } catch (error) {
-      console.error('AI生成失败:', error)
-      throw error
-    }
-  },
-
-  // 更新生成次数
-  async updateGenerateCount() {
-    try {
-      // 获取最新用户信息
+      // 重新获取用户信息
       const userInfo = await userAPI.getUserInfo()
       const app = getApp()
-      app.globalData.user = userInfo
+      app.globalData.userInfo = userInfo
       
       this.setData({
-        remainingCount: userInfo.isVip ? 999 : Math.max(0, 10 - (userInfo.generateCount || 0))
+        remainingCount: userInfo.isVip ? 999 : Math.max(0, userInfo.credits || 0)
       })
     } catch (error) {
-      console.error('更新生成次数失败:', error)
-      // 本地更新作为备选
-      this.setData({
-        remainingCount: Math.max(0, this.data.remainingCount - 1)
-      })
+      console.error('更新用户信息失败:', error)
     }
   },
 
-  // 显示VIP弹窗
   showVipModal() {
     this.setData({
       showVipModal: true
     })
   },
 
-  // 隐藏VIP弹窗
   hideVipModal() {
     this.setData({
       showVipModal: false
     })
   },
 
-  // 分享功能
   onShareAppMessage() {
     return {
-      title: 'AI绘图助手 - 文字秒变精美图片',
+      title: 'AI绘图助手 - 文字生成精美图片',
       path: '/pages/index/index'
     }
   }

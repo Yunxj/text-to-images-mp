@@ -12,7 +12,18 @@
       <text>生成的图片</text>
     </view>
     <view class="image-card">
-      <image class="generated-image" src="{{imageUrl}}" mode="aspectFit" bindtap="previewImage" />
+      <image 
+        class="generated-image" 
+        src="{{imageUrl}}" 
+        mode="aspectFit" 
+        bindtap="previewImage" 
+        bindload="onImageLoad"
+        binderror="onImageError"
+        lazy-load="{{true}}"
+      />
+      <view class="image-loading" wx:if="{{!imageLoaded}}">
+        <text>图片加载中...</text>
+      </view>
     </view>
   </view>
 

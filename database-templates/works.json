@@ -1,0 +1,41 @@
+{
+  "name": "works",
+  "description": "用户作品集合",
+  "permission": {
+    "read": true,
+    "write": "doc.userId == auth.openid"
+  },
+  "sampleData": {
+    "userId": "test_user_123",
+    "title": "测试作品",
+    "prompt": "一只可爱的小猫",
+    "imageUrl": "https://example.com/image.jpg",
+    "model": "cogview-3",
+    "style": "realistic",
+    "isPublic": false,
+    "isFavorite": true,
+    "tags": [
+      "动物",
+      "可爱"
+    ],
+    "createdAt": "2025-06-24T08:13:59.481Z",
+    "updatedAt": "2025-06-24T08:13:59.481Z"
+  },
+  "indexes": [
+    {
+      "name": "user_time_index",
+      "fields": {
+        "userId": 1,
+        "createdAt": -1
+      }
+    },
+    {
+      "name": "public_time_index",
+      "fields": {
+        "isPublic": 1,
+        "createdAt": -1
+      }
+    }
+  ],
+  "createScript": "// 集合权限设置\n{\n  \"read\": true,\n  \"write\": \"doc.userId == auth.openid\"\n}\n\n// 示例数据\n{\n  \"userId\": \"test_user_123\",\n  \"title\": \"测试作品\",\n  \"prompt\": \"一只可爱的小猫\",\n  \"imageUrl\": \"https://example.com/image.jpg\",\n  \"model\": \"cogview-3\",\n  \"style\": \"realistic\",\n  \"isPublic\": false,\n  \"isFavorite\": true,\n  \"tags\": [\n    \"动物\",\n    \"可爱\"\n  ],\n  \"createdAt\": \"2025-06-24T08:13:59.481Z\",\n  \"updatedAt\": \"2025-06-24T08:13:59.481Z\"\n}\n\n// 索引配置\n\n// user_time_index\n{\n  \"userId\": 1,\n  \"createdAt\": -1\n}\n\n// public_time_index\n{\n  \"isPublic\": 1,\n  \"createdAt\": -1\n}"
+}

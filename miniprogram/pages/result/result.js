@@ -3,7 +3,8 @@ Page({
     prompt: '',
     optimizedPrompt: '',
     imageUrl: '',
-    workId: null
+    workId: null,
+    imageLoaded: false
   },
 
   onLoad(options) {
@@ -22,9 +23,29 @@ Page({
     })
   },
 
+  // 图片加载完成
+  onImageLoad() {
+    console.log('图片加载成功')
+    this.setData({
+      imageLoaded: true
+    })
+  },
+
+  // 图片加载失败
+  onImageError(e) {
+    console.error('图片加载失败:', e)
+    this.setData({
+      imageLoaded: false
+    })
+    wx.showToast({
+      title: '图片加载失败',
+      icon: 'none'
+    })
+  },
+
   // 预览图片
   previewImage() {
-    if (this.data.imageUrl) {
+    if (this.data.imageUrl && this.data.imageLoaded) {
       wx.previewImage({
         current: this.data.imageUrl,
         urls: [this.data.imageUrl]

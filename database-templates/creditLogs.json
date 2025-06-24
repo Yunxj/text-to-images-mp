@@ -1,0 +1,28 @@
+{
+  "name": "creditLogs",
+  "description": "积分记录集合",
+  "permission": {
+    "read": "doc.userId == auth.openid",
+    "write": "doc.userId == auth.openid"
+  },
+  "sampleData": {
+    "userId": "test_user_123",
+    "type": "consume",
+    "amount": -10,
+    "reason": "生成图片",
+    "description": "使用AI生成图片消耗积分",
+    "relatedId": "work_123",
+    "balance": 90,
+    "createdAt": "2025-06-24T08:13:59.481Z"
+  },
+  "indexes": [
+    {
+      "name": "user_time_index",
+      "fields": {
+        "userId": 1,
+        "createdAt": -1
+      }
+    }
+  ],
+  "createScript": "// 集合权限设置\n{\n  \"read\": \"doc.userId == auth.openid\",\n  \"write\": \"doc.userId == auth.openid\"\n}\n\n// 示例数据\n{\n  \"userId\": \"test_user_123\",\n  \"type\": \"consume\",\n  \"amount\": -10,\n  \"reason\": \"生成图片\",\n  \"description\": \"使用AI生成图片消耗积分\",\n  \"relatedId\": \"work_123\",\n  \"balance\": 90,\n  \"createdAt\": \"2025-06-24T08:13:59.481Z\"\n}\n\n// 索引配置\n\n// user_time_index\n{\n  \"userId\": 1,\n  \"createdAt\": -1\n}"
+}

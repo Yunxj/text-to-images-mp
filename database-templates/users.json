@@ -1,0 +1,27 @@
+{
+  "name": "users",
+  "description": "用户信息集合",
+  "permission": {
+    "read": true,
+    "write": "doc._openid == auth.openid"
+  },
+  "sampleData": {
+    "_openid": "test_user_123",
+    "nickname": "测试用户",
+    "avatar": "https://example.com/avatar.jpg",
+    "credits": 100,
+    "totalGenerated": 0,
+    "membership": "free",
+    "createdAt": "2025-06-24T08:13:59.481Z",
+    "updatedAt": "2025-06-24T08:13:59.481Z"
+  },
+  "indexes": [
+    {
+      "name": "openid_index",
+      "fields": {
+        "_openid": 1
+      }
+    }
+  ],
+  "createScript": "// 集合权限设置\n{\n  \"read\": true,\n  \"write\": \"doc._openid == auth.openid\"\n}\n\n// 示例数据\n{\n  \"_openid\": \"test_user_123\",\n  \"nickname\": \"测试用户\",\n  \"avatar\": \"https://example.com/avatar.jpg\",\n  \"credits\": 100,\n  \"totalGenerated\": 0,\n  \"membership\": \"free\",\n  \"createdAt\": \"2025-06-24T08:13:59.481Z\",\n  \"updatedAt\": \"2025-06-24T08:13:59.481Z\"\n}\n\n// 索引配置\n\n// openid_index\n{\n  \"_openid\": 1\n}"
+}

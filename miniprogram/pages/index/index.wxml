@@ -121,8 +121,8 @@
 <view class="loading-modal" wx:if="{{isGenerating}}">
   <view class="loading-content">
     <view class="loading-spinner"></view>
-    <text class="loading-text">AI正在为您创作图片...</text>
-    <text class="loading-sub">预计需要10-30秒</text>
+    <text class="loading-text">智谱AI正在为您创作高质量图片...</text>
+    <text class="loading-sub">真实AI生成，预计需要20-60秒，请耐心等待</text>
   </view>
 </view>
 
