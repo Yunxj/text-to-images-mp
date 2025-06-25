@@ -7,6 +7,7 @@
 
 /* 模式切换标签 */
 .mode-tabs {
+  width: 95%;
   display: flex;
   background: white;
   padding: 20rpx 32rpx;
@@ -30,6 +31,7 @@
 
 /* 输入区域 */
 .input-section {
+  width: 85%;
   background: white;
   padding: 32rpx;
   margin-bottom: 20rpx;
@@ -194,8 +196,11 @@
   padding: 0;
 }
 
+
+
 /* 生成按钮区域 */
 .generate-section {
+  width: 85%;
   background: white;
   padding: 32rpx;
   margin-bottom: 100rpx;
@@ -221,6 +226,7 @@
 .tips {
   display: flex;
   justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   margin-top: 24rpx;
   font-size: 26rpx;

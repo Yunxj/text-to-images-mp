@@ -100,6 +100,8 @@
     </view>
   </view> -->
 
+
+
   <!-- 生成按钮 -->
   <view class="generate-section">
     <button 
@@ -112,8 +114,8 @@
     
     <view class="tips">
       <text class="tip-text">积分余额：{{remainingCount}}次</text>
-      <text class="tip-text daily-limit">每日限制：{{dailyUsage.used}}/{{dailyUsage.limit}}次 ({{dailyUsage.userType === 'vip' ? 'VIP用户' : '免费用户'}})</text>
-      <text class="tip-link" bindtap="showVipModal">升级VIP，获得更多次数</text>
+      <text class="tip-text daily-limit">每日限制：{{dailyUsage.todayUsed}}/{{dailyUsage.dailyLimit}}次 ({{dailyUsage.userType === 'vip' ? 'VIP用户' : '免费用户'}})</text>
+      <!-- <text class="tip-link" bindtap="showVipModal">升级VIP，获得更多次数</text> -->
     </view>
   </view>
 </view>

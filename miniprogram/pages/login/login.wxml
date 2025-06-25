@@ -1,0 +1,93 @@
+<!--login.wxml-->
+<view class="login-container">
+  <!-- 背景装饰 -->
+  <view class="bg-decoration">
+    <view class="bg-circle circle-1"></view>
+    <view class="bg-circle circle-2"></view>
+    <view class="bg-circle circle-3"></view>
+  </view>
+
+  <!-- 主内容区 -->
+  <view class="login-content">
+    <!-- Logo和标题 -->
+    <view class="logo-section">
+      <view class="app-logo-text">🎨</view>
+      <view class="app-title">AI图像创作</view>
+      <view class="app-desc">创意无限，一键生成精美图片</view>
+    </view>
+
+    <!-- 登录状态显示 -->
+    <view class="login-status" wx:if="{{hasUserInfo}}">
+      <view class="user-info-card">
+        <view class="user-avatar-placeholder">👤</view>
+        <view class="user-details">
+          <view class="user-name">{{userInfo.nickname}}</view>
+          <view class="user-credits">剩余点数：{{userInfo.credits}}</view>
+        </view>
+        <view class="login-success-icon">✓</view>
+      </view>
+      
+      <button class="continue-btn" bindtap="navigateBack">
+        继续使用
+      </button>
+    </view>
+
+    <!-- 登录按钮区 -->
+    <view class="login-actions" wx:else>
+      <!-- 微信登录按钮 -->
+      <button 
+        class="wx-login-btn {{isLoading ? 'loading' : ''}}" 
+        bindtap="wxLogin"
+        disabled="{{isLoading}}"
+        hover-class="btn-hover"
+      >
+        <view class="btn-content">
+          <text class="wx-icon-text" wx:if="{{!isLoading}}">💬</text>
+          <view class="loading-icon" wx:else>
+            <view class="spinner"></view>
+          </view>
+          <text class="btn-text">{{isLoading ? '登录中...' : '微信授权登录'}}</text>
+        </view>
+      </button>
+
+      <!-- 游客模式按钮 -->
+      <button class="guest-login-btn" bindtap="guestLogin" hover-class="btn-hover">
+        <view class="btn-content">
+          <text class="btn-text">游客模式体验</text>
+          <text class="btn-desc">（功能受限）</text>
+        </view>
+      </button>
+
+      <!-- 登录说明 -->
+      <view class="login-tips">
+        <view class="tip-item">
+          <text class="tip-icon">🔒</text>
+          <text class="tip-text">安全登录，信息加密保护</text>
+        </view>
+        <view class="tip-item">
+          <text class="tip-icon">🎁</text>
+          <text class="tip-text">新用户送100点数</text>
+        </view>
+        <view class="tip-item">
+          <text class="tip-icon">☁️</text>
+          <text class="tip-text">云端同步，换设备不丢失</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 权限说明 -->
+    <view class="permission-notice">
+      <view class="notice-title">授权说明</view>
+      <view class="notice-content">
+        登录即表示您同意获取您的微信头像、昵称等基本信息，用于个性化服务和作品保存。我们承诺严格保护您的隐私安全。
+      </view>
+    </view>
+
+    <!-- 底部链接 -->
+    <view class="footer-links">
+      <text class="link-text" bindtap="showPrivacy">隐私政策</text>
+      <text class="link-divider">|</text>
+      <text class="link-text" bindtap="showTerms">用户协议</text>
+    </view>
+  </view>
+</view> 

@@ -85,28 +85,18 @@ App({
     }
   },
 
-  // 微信登录
-  async wxLogin() {
+  // 微信登录（已弃用，请直接在页面中调用登录逻辑）
+  // 这个方法保留用于兼容，但建议直接在页面中处理登录
+  async wxLogin(code, userInfo) {
     try {
-      // 获取微信登录code
-      const loginRes = await wx.login()
-      if (!loginRes.code) {
-        throw new Error('获取微信登录code失败')
-      }
-
-      // 获取用户信息
-      const userProfile = await wx.getUserProfile({
-        desc: '用于完善会员资料'
-      })
-
       // 调用云函数进行微信登录
       const result = await wx.cloud.callFunction({
         name: 'login',
         data: {
           action: 'wxLogin',
           data: {
-            code: loginRes.code,
-            userInfo: userProfile.userInfo
+            code: code,
+            userInfo: userInfo
           }
         }
       })
@@ -115,11 +105,6 @@ App({
         this.globalData.userInfo = result.result.data.userInfo
         wx.setStorageSync('userInfo', this.globalData.userInfo)
         
-        wx.showToast({
-          title: '登录成功',
-          icon: 'success'
-        })
-        
         console.log('微信登录成功:', this.globalData.userInfo)
         return this.globalData.userInfo
       } else {
@@ -127,10 +112,6 @@ App({
       }
     } catch (error) {
       console.error('微信登录失败:', error)
-      wx.showToast({
-        title: '登录失败',
-        icon: 'none'
-      })
       throw error
     }
   },

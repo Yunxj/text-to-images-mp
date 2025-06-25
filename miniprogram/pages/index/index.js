@@ -43,9 +43,30 @@ Page({
   },
 
   onLoad() {
-    this.initCharacters()
-    this.initUser()
-    this.loadDailyUsage()
+    try {
+      console.log('Index页面开始加载...')
+      this.initCharacters()
+      this.initUserAndData()
+    } catch (error) {
+      console.error('页面初始化失败:', error)
+      // 设置基本的默认数据确保页面能显示
+      this.setData({
+        remainingCount: 0,
+        dailyUsage: {
+          todayUsed: 0,
+          dailyLimit: 10,
+          remaining: 10,
+          userType: 'guest'
+        },
+        selectedCharacter: { id: 1, name: '可爱小女孩' }
+      })
+      
+      wx.showToast({
+        title: '页面加载异常，部分功能可能受影响',
+        icon: 'none',
+        duration: 3000
+      })
+    }
   },
 
   // 初始化角色数据
@@ -80,24 +101,35 @@ Page({
     })
   },
 
-  // 初始化用户
-  async initUser() {
+  // 初始化用户和数据
+  async initUserAndData() {
     try {
       const app = getApp()
       if (app.globalData.userInfo) {
+        // 用户已登录，初始化数据
         this.setData({
           remainingCount: app.globalData.userInfo.isVip ? 999 : Math.max(0, app.globalData.userInfo.credits || 0)
         })
+        
+        // 加载每日使用量
+        await this.loadDailyUsage()
       } else {
         // 如果没有用户信息，等待登录完成
+        console.log('等待用户登录...')
         setTimeout(() => {
-          this.initUser()
+          this.initUserAndData()
         }, 1000)
       }
     } catch (error) {
       console.error('用户初始化失败:', error)
       this.setData({
-        remainingCount: 0
+        remainingCount: 0,
+        dailyUsage: {
+          todayUsed: 0,
+          dailyLimit: 10,
+          remaining: 10,
+          userType: 'guest'
+        }
       })
     }
   },
@@ -105,6 +137,22 @@ Page({
   // 加载每日使用量
   async loadDailyUsage() {
     try {
+      // 检查用户是否已登录
+      const app = getApp()
+      if (!app.globalData.userInfo) {
+        console.log('用户未登录，跳过加载每日使用量')
+        // 设置默认的游客数据
+        this.setData({
+          dailyUsage: {
+            todayUsed: 0,
+            dailyLimit: 10,
+            remaining: 10,
+            userType: 'guest'
+          }
+        })
+        return
+      }
+
       const result = await aiAPI.getDailyUsage()
       if (result && result.data) {
         this.setData({
@@ -114,6 +162,22 @@ Page({
       }
     } catch (error) {
       console.error('获取每日使用量失败:', error)
+      
+      // 如果是"未知的操作类型"错误，可能是云函数版本问题
+      if (error.message && error.message.includes('未知的操作类型')) {
+        console.error('云函数可能需要重新部署，使用默认数据')
+      }
+      
+      // 设置默认数据避免页面报错
+      this.setData({
+        dailyUsage: {
+          todayUsed: 0,
+          dailyLimit: 10,
+          remaining: 10,
+          userType: 'guest',
+          error: true
+        }
+      })
     }
   },
 
@@ -228,10 +292,10 @@ Page({
     }
 
     // 检查每日限制
-    if (dailyUsage.remaining <= 0) {
+    if (dailyUsage && dailyUsage.remaining <= 0) {
       wx.showModal({
         title: '今日生成次数已用完',
-        content: `您今日已使用 ${dailyUsage.used}/${dailyUsage.limit} 次，明日0点重置。升级VIP可获得更多次数。`,
+        content: `您今日已使用 ${dailyUsage.todayUsed}/${dailyUsage.dailyLimit} 次，明日0点重置。升级VIP可获得更多次数。`,
         showCancel: true,
         cancelText: '知道了',
         confirmText: '升级VIP',
@@ -333,6 +397,9 @@ Page({
       showVipModal: false
     })
   },
+
+  // 测试登录功能
+
 
   onShareAppMessage() {
     return {

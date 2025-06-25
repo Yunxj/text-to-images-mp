@@ -6,6 +6,7 @@ Page({
     workCount: 1,
     credits: 16,
     isVip: false,
+    isGuest: true,
     recentWorks: [],
     showVipModal: false,
     showExchangeModal: false,
@@ -27,21 +28,13 @@ Page({
     if (app.globalData.userInfo) {
       this.setData({
         userInfo: app.globalData.userInfo,
-        isVip: app.globalData.isVip
+        isVip: app.globalData.isVip,
+        isGuest: app.globalData.userInfo.userType === 'guest'
       })
     } else {
-      // 获取用户信息
-      wx.getUserProfile({
-        desc: '用于完善用户资料',
-        success: (res) => {
-          app.globalData.userInfo = res.userInfo
-          this.setData({
-            userInfo: res.userInfo
-          })
-        },
-        fail: () => {
-          console.log('用户拒绝授权')
-        }
+      this.setData({
+        userInfo: null,
+        isGuest: true
       })
     }
   },
@@ -281,6 +274,83 @@ Page({
       }
     })
   },
+
+  // 微信登录
+  async wxLogin() {
+    try {
+      wx.showLoading({
+        title: '授权中...'
+      })
+
+      // 1. 获取微信登录code
+      const loginRes = await wx.login()
+      if (!loginRes.code) {
+        throw new Error('获取微信登录code失败')
+      }
+
+      // 2. 获取用户信息 - 必须在用户点击事件中直接调用
+      const userProfile = await wx.getUserProfile({
+        desc: '用于完善会员资料'
+      })
+
+      wx.hideLoading()
+      wx.showLoading({
+        title: '登录中...'
+      })
+
+      // 3. 调用云函数进行微信登录
+      const result = await wx.cloud.callFunction({
+        name: 'login',
+        data: {
+          action: 'wxLogin',
+          data: {
+            code: loginRes.code,
+            userInfo: userProfile.userInfo
+          }
+        }
+      })
+
+      wx.hideLoading()
+
+      if (result.result.code === 200) {
+        const app = getApp()
+        app.globalData.userInfo = result.result.data.userInfo
+        wx.setStorageSync('userInfo', app.globalData.userInfo)
+
+        this.setData({
+          userInfo: result.result.data.userInfo,
+          isGuest: false,
+          isVip: result.result.data.userInfo.isVip
+        })
+        
+        wx.showToast({
+          title: '登录成功',
+          icon: 'success'
+        })
+      } else {
+        throw new Error(result.result.message || '登录失败')
+      }
+    } catch (error) {
+      console.error('登录失败:', error)
+      wx.hideLoading() // 确保hideLoading被调用
+      
+      let errorMessage = '登录失败，请重试'
+      if (error.errMsg && error.errMsg.includes('getUserProfile:fail')) {
+        if (error.errMsg.includes('deny')) {
+          errorMessage = '您拒绝了授权，无法登录'
+        } else if (error.errMsg.includes('user TAP gesture')) {
+          errorMessage = '请直接点击登录按钮'
+        }
+      }
+      
+      wx.showToast({
+        title: errorMessage,
+        icon: 'none'
+      })
+    }
+  },
+
+
 
   // 分享功能
   onShareAppMessage() {
